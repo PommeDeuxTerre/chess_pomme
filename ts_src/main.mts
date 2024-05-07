@@ -6,6 +6,7 @@ import * as ejs from "ejs";
 import * as ws_chess from "./js_modules/ws.mjs";
 import * as wstockfish from "./stockfish/wstockfish.mjs";
 import * as ws_controller from "./js_modules/ws_controller.mjs";
+import * as ws_game from "./js_modules/Game.mjs";
 import * as Game from "./model/Game.mjs";
 import * as UserModel from "./model/User.mjs";
 
@@ -14,7 +15,7 @@ import * as login_controller from "./controller/login.mjs";
 import * as signup_controller from "./controller/signup.mjs";
 import * as game_controller from "./controller/game.mjs";
 
-import { game, User } from "./types";
+import { game, SocketGames, Sockets, User } from "./types";
 
 const port:number = 8080;
 const DEFAULT_STOCKFISH_LEVEL:number = 20;
@@ -48,6 +49,7 @@ function get_waiting_games(number:number=10):(number|string)[][]{
 }
 
 const server = http.createServer(async function (req, res){
+	console.log(req.headers.cookie);
 	const url:string = req.url || "";
 	const parameters:string = url.replace(/\?.*/gm, "");
 	let user:User|false;
@@ -91,6 +93,27 @@ const server = http.createServer(async function (req, res){
 		case "/signup":
 			signup_controller.main(req, res, user);
 			return
+		case "/create_game":
+			let response_text = "";
+			req.on("data", (data)=>response_text+=data)
+			.on("end", ()=>{
+				try {
+					//get timestamp of the game
+					const datas:{minutes?:number, seconds?:number} = JSON.parse(response_text);
+					if (datas.minutes===undefined || typeof datas.minutes !== "number")throw "minutes is not valid";
+					if (datas.seconds===undefined || typeof datas.seconds !== "number")throw "seconds is not valid";
+					const timer:number = datas.minutes*60*1000 + datas.seconds*1000 //(minutes * seconds * ms) + (seconds * ms)
+					//find id
+					const id_void = id_games.findIndex((el)=>el===undefined);
+					const id = id_void===-1 ? id_games.length : id_void;
+					//init game
+					let player:ws_game.Player = new ws_game.Player(sockets, socket_id, timer);
+					let game = new ws_game.Game(undefined, id);
+				}catch (error){
+					console.log(error);
+				}
+			});
+			break;
 		case "/js/chess_game/Board.mjs":
 			fs.readFile("./js_modules/Board.mjs",function(err, data){
 				if (err)return_http_error(400, res, "file not found");
@@ -154,12 +177,13 @@ const ws_server = new ws.WebSocketServer({
 	port: 3000
 });
 
-let sockets:ws.WebSocket[] = [];
-let socket_games:game[] = [];
+let sockets:Sockets[] = [];
+let socket_games:SocketGames[] = [];
 let id_games:game[] = [];
 let bot_id_games:game[] = [];
 
-ws_server.on('connection', function(socket:ws.WebSocket) {
+ws_server.on('connection', function(socket:ws.WebSocket, req:http.IncomingMessage) {
+	console.log(`socket url: ${req.url}`);
 	sockets.push(socket);
 	const socket_id:number = Math.floor(Math.random()*1000000)
 	let is_against_bot:boolean = false;

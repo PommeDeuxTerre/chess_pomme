@@ -70,7 +70,7 @@ export interface game {
     timestamp;//ms
     play:(move:string, filter_good_move:(m:move)=>boolean)=>boolean;
     finish:(winner:Player, message:string)=>void;
-    close:(id_games:(game|undefined)[], socket_games:(game|undefined)[], sockets:(ws.WebSocket|undefined)[])=>void;
+    close:(id_games:(game|undefined)[], socket_games:SocketGames, sockets:Sockets)=>void;
     check_timeout:()=>void;
     get_pgn:()=>string;
 }
@@ -79,4 +79,12 @@ export interface User {
     username:string;
     id:number;
     set_cookie:()=>Promise<string>;
+}
+
+export interface Sockets {
+    [key: string]: number;
+}
+
+export interface SocketGames {
+    [key: string]: game;
 }

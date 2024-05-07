@@ -54,16 +54,26 @@ function stockfish_popup(){
     close_button.addEventListener("click", ()=>document.querySelector("#bot-parameters").remove());
 }
 
-function launch_game(){
+function launch_game(event){
+    event.preventDefault();
     const minutes = Number(document.querySelector("#minutes-game").value);
     const seconds = Number(document.querySelector("#seconds-game").value);
     if (seconds<0 || seconds>59 || minutes<0 || minutes>60){
         alert("cadence invalide");
         return;
     }
+    fetch("./create_game", {
+        method: "POST",
+        body: JSON.stringify({
+            minutes: minutes,
+            seconds: seconds
+        })
+    });
+    /*
     const id_game = Math.floor(Math.random()*1000);
     const url = "./game?id_game="+id_game+"&minutes="+minutes+"&seconds="+seconds;
     location.href = url;
+    */
 }
 
 function create_game_popup(){

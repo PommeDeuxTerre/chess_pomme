@@ -1,18 +1,18 @@
-import { board, color, game, move, piece } from "../types";
+import { SocketGames, Sockets, board, color, game, move, piece } from "../types";
 
 import * as Board from "./Board.mjs";
 import * as ModelGame from "../model/Game.mjs";
 import ws from "ws";
 
 class Game implements game{
-    player_1:Player;
+    player_1:Player|undefined;
     player_2:Player|undefined;
     id:number;
     board:board;
     moves:Move[];
     result:string|null;
     timestamp; //minutes * seconds * ms
-    constructor(player_1:Player, id:number){
+    constructor(player_1:Player|undefined, id:number){
         this.player_1 = player_1;
         this.player_2 = undefined;
         this.id = id;
@@ -56,20 +56,20 @@ class Game implements game{
         const winner_db = this.result === "D" ? "draw" : "W" ? "white" : "black";
         if (this.moves.length>1)ModelGame.insert_game(this.get_pgn(), winner_db, message);
     }
-    close(id_games:(game|undefined)[], socket_games:(game|undefined)[], sockets:(ws.WebSocket|undefined)[]):void{
+    close(id_games:(game|undefined)[], socket_games:SocketGames, sockets:Sockets):void{
         id_games[this.id] = undefined;
 
         //player 1
         if (this.player_1 && this.player_1.socket){
             this.player_1.socket.close();
-            socket_games[this.player_1.socket_id] = undefined;
-            sockets[this.player_1.socket_id] = undefined;
+            delete socket_games[this.player_1.socket_id];
+            delete sockets[this.player_1.socket_id];
         }
         //player 2
         if (this.player_2 && this.player_2.socket){
             this.player_2.socket.close();
-            socket_games[this.player_2.socket_id] = undefined;
-            sockets[this.player_2.socket_id] = undefined;
+            delete socket_games[this.player_2.socket_id];
+            delete sockets[this.player_2.socket_id];
         }
     }
     check_timeout():void{
@@ -97,17 +97,23 @@ class Game implements game{
 }
 
 class Player{
-    socket:ws.WebSocket;
-    socket_id:number;
+    socket?:ws.WebSocket;
+    socket_id:string;
     total_timestamp:number;
     draw_proposal:boolean;
     rematch_proposal:boolean;
-    constructor(socket:ws.WebSocket, socket_id:number, total_timestamp:number){
-        this.socket = socket;
-        this.socket_id = socket_id;
+    constructor(total_timestamp:number){
+        this.socket_id = this.generate_id();
         this.total_timestamp = total_timestamp;
         this.draw_proposal = false;
         this.rematch_proposal = false;
+    }
+    generate_id():string{
+        let id = "";
+        for (let i=0;i<10;i++){
+            id+=String.fromCharCode(Math.floor(Math.random()*26)+97);
+        }
+        return id;
     }
 }
 
