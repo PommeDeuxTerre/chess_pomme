@@ -109,11 +109,14 @@ const server = http.createServer(async function (req, res){
 					//init game
 					let player:ws_game.Player = new ws_game.Player(timer, user ? user.id : user);
 					let game = new ws_game.Game(player, id);
+					id_games[game.id] = game;
+					return return_http_result(200, res, {"Content-Type": "text"}, `${id}`);
 				}catch (error){
+					return_http_error(400, res, "error while initializing the game");
 					console.log(error);
 				}
 			});
-			break;
+			return;
 		case "/js/chess_game/Board.mjs":
 			fs.readFile("./js_modules/Board.mjs",function(err, data){
 				if (err)return_http_error(400, res, "file not found");
