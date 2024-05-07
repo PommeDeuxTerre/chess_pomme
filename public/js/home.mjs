@@ -68,6 +68,14 @@ function launch_game(event){
             minutes: minutes,
             seconds: seconds
         })
+    }).then(async (res)=>{
+        const json_res = await res.json();
+        if (typeof json_res === "string"){
+            return console.log(json_res);
+        }
+        const id = json_res;
+        console.log(id);
+        location.href = `./game?id_game=${id}`;
     });
     /*
     const id_game = Math.floor(Math.random()*1000);
