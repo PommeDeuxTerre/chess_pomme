@@ -52,7 +52,7 @@ const server = http.createServer(async function (req, res){
 	console.log(req.headers.cookie);
 	const url:string = req.url || "";
 	const parameters:string = url.replace(/\?.*/gm, "");
-	let user:User|false;
+	let user:User|undefined;
 	try {
 		user = await UserModel.get_user_by_cookies(req.headers.cookie);
 	}catch(error){
@@ -107,8 +107,8 @@ const server = http.createServer(async function (req, res){
 					const id_void = id_games.findIndex((el)=>el===undefined);
 					const id = id_void===-1 ? id_games.length : id_void;
 					//init game
-					let player:ws_game.Player = new ws_game.Player(sockets, socket_id, timer);
-					let game = new ws_game.Game(undefined, id);
+					let player:ws_game.Player = new ws_game.Player(timer, user ? user.id : user);
+					let game = new ws_game.Game(player, id);
 				}catch (error){
 					console.log(error);
 				}

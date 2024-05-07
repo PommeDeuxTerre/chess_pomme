@@ -119,9 +119,9 @@ async function get_auth_cookie(all_cookies:string|undefined):Promise<string|unde
     return cookies[0].substring("auth_cookie=".length);
 }
 
-async function get_user_by_cookies(all_cookies:string|undefined):Promise<false|User>{
+async function get_user_by_cookies(all_cookies:string|undefined):Promise<User|undefined>{
     const cookie:string|undefined = await get_auth_cookie(all_cookies);
-    if (!cookie)return false;
+    if (!cookie)return;
 
     if (pool===undefined){
         throw "get_user_by_cookies: not connected to the db";
@@ -133,7 +133,7 @@ async function get_user_by_cookies(all_cookies:string|undefined):Promise<false|U
         //request
         conn = await pool.getConnection();
         const res = await conn.query(sql, [cookie]);
-        if (res.length===0)return false;
+        if (res.length===0)return undefined;
         return new User(res[0].id, res[0].username);
     }catch (error){
         throw error;

@@ -102,11 +102,13 @@ class Player{
     total_timestamp:number;
     draw_proposal:boolean;
     rematch_proposal:boolean;
-    constructor(total_timestamp:number){
+    user_id?:number;
+    constructor(total_timestamp:number, user_id?:number){
         this.socket_id = this.generate_id();
         this.total_timestamp = total_timestamp;
         this.draw_proposal = false;
         this.rematch_proposal = false;
+        this.user_id = user_id;
     }
     generate_id():string{
         let id = "";
